@@ -10,8 +10,6 @@ import java.util.List;
 public class Main {
 
   public static void main(String[] args) {
-    System.out.println("Hello World!");
-
     List<Integer> calibrationValues = new ArrayList<>();
     try (BufferedReader reader = Files.newBufferedReader(Path.of("input.txt"))) {
       reader.lines().forEach(line -> {
