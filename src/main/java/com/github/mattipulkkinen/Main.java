@@ -15,21 +15,9 @@ public class Main {
       rounds = reader.lines().map(Main::readGameFromInputLine).toList();
     }
 
-    int sumOfIds = rounds.stream().filter(Main::gameFitsGivenCriteria).mapToInt(GameRound::id)
-        .sum();
+    int sumOfPowers = rounds.stream().mapToInt(GameRound::powerOfMinimumSet).sum();
 
-    System.out.println("The sum is " + sumOfIds);
-  }
-
-  private static boolean gameFitsGivenCriteria(GameRound round) {
-    final int MAXIMUM_REDS = 12;
-    final int MAXIMUM_GREENS = 13;
-    final int MAXIMUM_BLUES = 14;
-
-    List<SetOfCubes> cubes = round.cubeSets();
-    return cubes.stream().allMatch(
-        setOfCubes -> setOfCubes.reds() <= MAXIMUM_REDS && setOfCubes.greens() <= MAXIMUM_GREENS
-            && setOfCubes.blues() <= MAXIMUM_BLUES);
+    System.out.println("The sum is " + sumOfPowers);
   }
 
   private static GameRound readGameFromInputLine(String line) {
