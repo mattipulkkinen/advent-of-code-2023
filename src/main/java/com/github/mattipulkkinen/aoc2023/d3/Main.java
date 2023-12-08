@@ -19,7 +19,7 @@ public class Main {
     }
 
     List<PartNumber> partNumbers = new ArrayList<>();
-    List<Point> pointsSurroundingSymbols = new ArrayList<>();
+    List<Point> symbols = new ArrayList<>();
 
     for (int row = 0; row < inputLines.size(); row++) {
       String currentLine = inputLines.get(row);
@@ -38,16 +38,35 @@ public class Main {
 
           partNumbers.add(new PartNumber(startingPoint, Integer.parseInt(fullNumber.toString())));
         } else if (currentCharacter != '.') {
-          pointsSurroundingSymbols.addAll(new Point(column, row).surroundingPoints());
+          symbols.add(new Point(column, row));
         }
       }
     }
 
-    int sumOfPartNumbersSurroundingSymbols = partNumbers.stream()
-        .filter(n -> n.occupiedPoints().stream().anyMatch(pointsSurroundingSymbols::contains))
-        .mapToInt(PartNumber::value).sum();
+    List<Point> gears = symbols.stream().filter(symbol -> {
+      List<Point> surroundingPoints = symbol.surroundingPoints();
 
-    System.out.println("The sum is " + sumOfPartNumbersSurroundingSymbols);
+      return partNumbers.stream().filter(partNumber -> {
+        for (Point occupiedPoint : partNumber.occupiedPoints()) {
+          if (surroundingPoints.contains(occupiedPoint)) {
+            return true;
+          }
+        }
+        return false;
+      }).count() == 2;
+    }).toList();
+
+    int sumOfAllGearRatios = gears.stream().map(gear -> partNumbers.stream().filter(partNumber -> {
+          for (Point occupiedPoint : partNumber.occupiedPoints()) {
+            if (gear.surroundingPoints().contains(occupiedPoint)) {
+              return true;
+            }
+          }
+          return false;
+        }).mapToInt(PartNumber::value).reduce(1, (subproduct, elem) -> subproduct * elem))
+        .mapToInt(i -> i).sum();
+
+    System.out.println("The sum of all gear ratios in the schematic is " + sumOfAllGearRatios);
   }
 
 }
