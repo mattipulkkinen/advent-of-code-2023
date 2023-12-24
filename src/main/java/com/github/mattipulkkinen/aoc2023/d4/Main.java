@@ -20,9 +20,23 @@ public class Main {
       System.exit(1);
     }
 
-    int totalValueOfAllCards = cards.stream().mapToInt(Card::value).sum();
+    for (int i = 0; i < cards.size(); i++) {
+      Card currentCard = cards.get(i);
+      winMoreScratchCards(cards, currentCard);
+    }
 
-    System.out.println("The total value of all cards is " + totalValueOfAllCards);
+    System.out.println("You have a total of " + cards.size() + " cards.");
+  }
+
+  private static void winMoreScratchCards(List<Card> cards, Card currentCard) {
+    int numberOfFirstWonCard = currentCard.cardNumber() + 1;
+    int numberOfLastWonCard = currentCard.value() + numberOfFirstWonCard;
+
+    for (int i = numberOfFirstWonCard; i < numberOfLastWonCard; i++) {
+      int finalI = i;
+      Card card = cards.stream().filter(c -> c.cardNumber() == finalI).findFirst().orElseThrow();
+      cards.add(card);
+    }
   }
 
   private static Card extractCardFromString(String string) {
