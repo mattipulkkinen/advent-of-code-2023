@@ -7,6 +7,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Main {
 
@@ -28,20 +32,49 @@ public class Main {
 
   private static long findLowestLocationNumber(List<Long> seedNumbers,
       List<List<RangeMapping>> mappings) {
-    List<Long> locationNumbers = new ArrayList<>();
+    try (ExecutorService executor = Executors.newFixedThreadPool(
+        Runtime.getRuntime().availableProcessors())) {
+      List<Future<Long>> tasks = new ArrayList<>();
 
-    for (Long seedNumber : seedNumbers) {
-      long result = seedNumber;
-      for (List<RangeMapping> mapping : mappings) {
-        long finalResult = result;
-        result = mapping.stream().filter(m -> m.isInRange(finalResult)).findFirst()
-            .orElse(new RangeMapping(finalResult, finalResult, 1)).map(finalResult);
+      for (int i = 0; i < seedNumbers.size(); i += 2) {
+        long seedRangeStart = seedNumbers.get(i);
+        long seedRangeEnd = seedRangeStart + seedNumbers.get(i + 1);
+
+        // for every seed range...
+        tasks.add(executor.submit(() -> {
+          long lowestLocationNumber = Long.MAX_VALUE;
+
+          for (long seedNumber = seedRangeStart; seedNumber <= seedRangeEnd; seedNumber++) {
+            long mappingResult = applyMappingsToSeedNumber(mappings, seedNumber);
+
+            if (mappingResult < lowestLocationNumber) {
+              lowestLocationNumber = mappingResult;
+            }
+          }
+
+          return lowestLocationNumber;
+        }));
       }
 
-      locationNumbers.add(result);
+      return tasks.stream().mapToLong(longFuture -> {
+        try {
+          return longFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      }).min().orElseThrow();
     }
+  }
 
-    return locationNumbers.stream().mapToLong(Long::valueOf).min().orElseThrow();
+  private static long applyMappingsToSeedNumber(List<List<RangeMapping>> mappings,
+      long seedNumber) {
+    long result = seedNumber;
+    for (List<RangeMapping> mapping : mappings) {
+      long finalResult = result;
+      result = mapping.stream().filter(m -> m.isInRange(finalResult)).findFirst()
+          .orElse(new RangeMapping(finalResult, finalResult, 1)).map(finalResult);
+    }
+    return result;
   }
 
   private static List<List<RangeMapping>> readMappingsFromInputFile(BufferedReader reader)
